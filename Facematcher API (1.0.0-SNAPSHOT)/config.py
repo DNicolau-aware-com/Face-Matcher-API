@@ -24,9 +24,11 @@ if not BASE_URL:
 if not API_KEY:
     raise EnvironmentError('x-api-key is not set. Check your .env file at: ' + ENV_PATH)
 
-JOB_ID   = _env.get('JOB_ID', '').strip() or None
+JOB_ID       = _env.get('JOB_ID', '').strip() or None
+SCAN_DIRECTORY = _env.get('SCAN_DIRECTORY', '').strip() or None
 
 print(f'[CONFIG] JOB_ID           : {JOB_ID if JOB_ID else "not set"}')
+print(f'[CONFIG] SCAN_DIRECTORY   : {SCAN_DIRECTORY if SCAN_DIRECTORY else "not set"}')
 
 TRACE_ID = 'pytest-facematcher'  # set to None to let the server auto-generate
 
