@@ -2,33 +2,35 @@
 import requests
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-from config import BASE_URL, HEADERS
+from config import BASE_URL, HEADERS, IMAGES
 
-GALLERY_NAME  = ''     # fallback for standalone run
-ENROLLMENT_ID = 'jane_face' # fallback — enrolled by test_create_gallery_and_enroll_all_faces
+ENROLLMENT_ID = 'delete_test_jane'
+IMAGE_KEY     = 'jane_face'
 
 def test_delete_an_enrollment_from_a_gallery(session_gallery, shared_state):
-    # PRE-REQUEST: session_gallery is the shared gallery.
-    # Use enrollment_id captured by test_enroll_a_face_into_a_gallery, or
-    # fall back to an identifier enrolled by test_create_gallery_and_enroll_all_faces.
     gallery = session_gallery
-    ident   = shared_state.get('enrollment_id', ENROLLMENT_ID)
+
+    # Enroll a fresh face so this test is self-contained and always has something to delete.
+    image_base64 = IMAGES.get(IMAGE_KEY)
+    assert image_base64, f'Image key "{IMAGE_KEY}" not found in config. Check your .env file.'
+
+    enroll_url = f'{BASE_URL}/facematch/galleries/{gallery}/enrollments/{ENROLLMENT_ID}'
+    enroll_r = requests.post(enroll_url, headers=HEADERS, json={'image': image_base64})
+    print(f'[DELETE ENROLLMENT] Pre-enroll status : {enroll_r.status_code}')
+    assert enroll_r.status_code == 200, f'Pre-enroll failed: {enroll_r.status_code}: {enroll_r.text}'
 
     # DELETE {{BASE_URL}}/facematch/galleries/{galleryName}/enrollments/{identifier}
-    url = f'{BASE_URL}/facematch/galleries/{gallery}/enrollments/{ident}'
-
+    url = f'{BASE_URL}/facematch/galleries/{gallery}/enrollments/{ENROLLMENT_ID}'
     r = requests.delete(url, headers=HEADERS)
 
     print(f'[DELETE ENROLLMENT] URL           : {url}')
     print(f'[DELETE ENROLLMENT] Gallery       : {gallery}')
-    print(f'[DELETE ENROLLMENT] Identifier    : {ident}')
+    print(f'[DELETE ENROLLMENT] Identifier    : {ENROLLMENT_ID}')
     print(f'[DELETE ENROLLMENT] Status        : {r.status_code}')
     print(f'[DELETE ENROLLMENT] Trace ID      : {r.headers.get("x-aware-trace-id", "not returned")}')
 
     if r.status_code == 204:
         print('[DELETE ENROLLMENT] Response      : Enrollment deleted (no body)')
-    elif r.status_code == 404:
-        print('[DELETE ENROLLMENT] Response      : Enrollment not found')
     else:
         print(f'[DELETE ENROLLMENT] Response      : {r.text}')
 
