@@ -81,7 +81,7 @@ AWRNSS-AUT/
 ├── run_suite.py                # Stability runner — repeats full suite N times
 ├── utils/
 │   ├── auth.py                 # Token retrieval helper (get_token())
-│   └── image_utils.py          # encode_image(path) — base64 file encoder
+│   └── image_utils.py          # encode_image(path— base64 file encoder
 └── tests/
     ├── conftest.py             # Shared fixtures (session_gallery, shared_state, etc.)
     ├── system/                 # Health and version endpoints
@@ -105,7 +105,7 @@ AWRNSS-AUT/
 |---|---|---|
 | `BASE_URL` | `str` | API base URL, trailing slash stripped |
 | `API_KEY` | `str` | Value of `x-api-key` from `.env` |
-| `TOKEN` | `str or None` | Bearer token (optional) |
+| `TOKEN` | `str or None` | Bearer token (optional|
 | `HEADERS` | `dict` | `x-api-key` + `Content-Type: application/json` + optional trace ID |
 | `IMAGES` | `dict` | Keys: `dan_face`, `john_face`, `jane_face`, `part_face`, `l_face`, `r_face`, `two_spoof` |
 | `JOB_ID` | `str or None` | Bulk job ID, read from `.env` |
@@ -487,7 +487,7 @@ Job ID resolved via: `shared_state['job_id']` → `JOB_ID` from config → `pyte
 |---|---|---|---|
 | `test_get_job_errors` | `GET /facematch/admin/jobs/{jobId}/errors` | 200 | `shared_state` |
 | `test_get_job_errors_with_limit` | `GET .../errors?limit=10` | 200 | `shared_state` |
-| `test_get_job_errors_invalid_id` | `GET .../errors` (nonexistent) | 404 | — |
+| `test_get_job_errors_invalid_id` | `GET .../errors` (nonexistent| 404 | — |
 
 Returns per-item error details for a job. The `limit` variant validates pagination on the error list.
 
@@ -505,7 +505,7 @@ Enrolls `dan_face` and `john_face` in a single batch with `storeImages: true`. R
 |---|---|---|---|
 | `test_enroll_bulk_templates` | `POST /facematch/admin/enroll/batch-images` | 200 | `session_gallery` |
 
-Enrolls `part_face` and `jane_face` (if present) with `storeImages: false`. Templates are computed but raw images are not stored, reducing storage usage.
+Enrolls `part_face` and `jane_face` (if presentwith `storeImages: false`. Templates are computed but raw images are not stored, reducing storage usage.
 
 #### `tests/bulk_enrollment/test_export_batch.py`
 
@@ -645,7 +645,7 @@ Constants: `NONEXISTENT_GALLERY = 'gallery_does_not_exist_xyz'`, `NONEXISTENT_ID
 
 | Test | Endpoint | Expected | Fixtures |
 |---|---|---|---|
-| `test_409_enroll_duplicate_identifier` | `POST .../enrollments/conflict_test_id` (x2) | 200/409, then 409 | `session_gallery` |
+| `test_409_enroll_duplicate_identifier` | `POST .../enrollments/conflict_test_id` (x2| 200/409, then 409 | `session_gallery` |
 
 Enrolls `dan_face` under `conflict_test_id` twice. The second call must return 409. Cleans up the enrollment after the assertion regardless of outcome.
 
