@@ -13,5 +13,16 @@ def test_version():
     print(f'[VERSION] Response     : {r.text}')
     assert r.status_code == 200, f'Expected 200, got {r.status_code}: {r.text}'
 
+
+def test_version_response_fields():
+    url  = f'{BASE_URL}/facematch/version'
+    r    = requests.get(url)
+    assert r.status_code == 200, f'Expected 200, got {r.status_code}: {r.text}'
+    body = r.json()
+    assert 'version' in body, f'"version" key missing from response: {body}'
+    print(f'[VERSION FIELDS] version : {body.get("version")}')
+
+
 if __name__ == '__main__':
     test_version()
+    test_version_response_fields()

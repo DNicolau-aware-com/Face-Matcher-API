@@ -1,7 +1,111 @@
 # conftest.py — loaded by pytest before any test file
+import json
 import uuid
 from datetime import datetime
+import requests as _requests
 import pytest
+
+
+# ---------------------------------------------------------------------------
+# CENTRALIZED HTTP LOGGER
+#
+#   Attaches a response hook to every requests.Session for the duration of
+#   each test. Logs method, URL, status, elapsed time, and full response body.
+#
+#   Output modes (controlled by HTTP_LOG env var or --http-log CLI option):
+#     always  → print every request/response
+#     failure → print only when the test fails  (default)
+#     never   → disable entirely
+#
+#   Usage:
+#     pytest -s                          # failure-only (default)
+#     pytest -s --http-log=always        # every request
+#     HTTP_LOG=always pytest -s          # same via env var
+# ---------------------------------------------------------------------------
+
+def pytest_addoption(parser):
+    parser.addoption(
+        '--http-log',
+        default='failure',
+        choices=['always', 'failure', 'never'],
+        help='HTTP request/response logging: always | failure (default) | never',
+    )
+
+
+def _format_body(response):
+    try:
+        return json.dumps(response.json(), indent=2)
+    except Exception:
+        text = response.text
+        return text[:500] + ('...' if len(text) > 500 else '')
+
+
+@pytest.fixture(autouse=True)
+def _http_logger(request):
+    """
+    Intercept every HTTP response made during this test via requests event hooks.
+    Stores a log of all calls; prints on failure (or always, depending on --http-log).
+    """
+    mode = request.config.getoption('--http-log', default='failure')
+    if mode == 'never':
+        yield
+        return
+
+    log = []
+
+    def _on_response(r, *args, **kwargs):
+        elapsed_ms = r.elapsed.total_seconds() * 1000 if r.elapsed else 0
+        entry = {
+            'method':   r.request.method,
+            'url':      r.request.url,
+            'status':   r.status_code,
+            'elapsed':  elapsed_ms,
+            'trace_id': r.headers.get('x-aware-trace-id', ''),
+            'body':     _format_body(r),
+        }
+        log.append(entry)
+        if mode == 'always':
+            _print_entry(entry)
+
+    _original_send = _requests.Session.send
+
+    def _patched_send(self, prepared, **kwargs):
+        response = _original_send(self, prepared, **kwargs)
+        _on_response(response)
+        return response
+
+    _requests.Session.send = _patched_send
+
+    yield
+
+    _requests.Session.send = _original_send
+
+    if mode == 'failure' and hasattr(request.node, 'rep_call') and request.node.rep_call.failed:
+        print(f'\n{"="*60}')
+        print(f'  HTTP LOG — {request.node.name}')
+        print(f'{"="*60}')
+        for entry in log:
+            _print_entry(entry)
+        print(f'{"="*60}')
+
+
+def _print_entry(entry):
+    trace = f'  trace={entry["trace_id"]}' if entry['trace_id'] else ''
+    print(f'\n  >> {entry["method"]} {entry["url"]}')
+    print(f'  << {entry["status"]}  ({entry["elapsed"]:.0f}ms){trace}')
+    for line in entry['body'].splitlines()[:20]:
+        print(f'     {line}')
+    if entry['body'].count('\n') > 20:
+        print(f'     ... (truncated)')
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Expose test outcome on item.rep_call so _http_logger can check it."""
+    outcome = yield
+    rep = outcome.get_result()
+    if rep.when == 'call':
+        item.rep_call = rep
 
 # ---------------------------------------------------------------------------
 # SHARED STATE — pytest equivalent of Postman environment variables.

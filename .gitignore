@@ -3,3 +3,10 @@ __pycache__/
 *.pyc
 .pytest_cache/
 *.html
+
+# Generated image manifest — large binary-encoded file, not committed to git.
+# Regenerate with: python scripts/generate_image_manifest.py
+tests/data/images.json
+
+# Claude Code internal state
+.claude/

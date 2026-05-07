@@ -4,7 +4,7 @@ import pytest
 import sys, os
 from config import BASE_URL, HEADERS, IMAGES
 
-GALLERY_NAME   = 'bulk5'  # fallback for standalone run
+GALLERY_NAME   = 'bulk7'  # fallback for standalone run
 IMAGE_KEY      = 'part_face'
 MAX_CANDIDATES = 1000
 THRESHOLD      = 4.0
